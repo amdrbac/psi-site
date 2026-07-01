@@ -1,0 +1,210 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-offwhite: #F9F6F0;
+    --color-moss: #3A5232;
+    --color-moss-light: #4A6E45;
+    --color-gold: #B8952A;
+    --color-gold-light: #C4A45A;
+    --color-text: #2A2A2A;
+    --color-text-muted: #6A6A6A;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-offwhite);
+    color: var(--color-text);
+    font-family: 'Montserrat', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    cursor: none;
+  }
+
+  * {
+    cursor: none;
+  }
+
+  ::selection {
+    background-color: #3A5232;
+    color: #F9F6F0;
+  }
+}
+
+@layer components {
+  /* Custom cursor */
+  .cursor-dot {
+    width: 8px;
+    height: 8px;
+    background-color: var(--color-moss);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s ease;
+  }
+
+  .cursor-ring {
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--color-gold);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: transform 0.15s ease, width 0.2s ease, height 0.2s ease, opacity 0.2s ease;
+  }
+
+  /* Gold divider */
+  .gold-divider {
+    width: 60px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+  }
+
+  .gold-divider-lg {
+    width: 120px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+  }
+
+  /* Fade-in animation */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Section title */
+  .section-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 400;
+    color: var(--color-moss);
+    letter-spacing: 0.02em;
+  }
+
+  /* Elegant button */
+  .btn-elegant {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 32px;
+    border: 1px solid var(--color-gold);
+    color: var(--color-gold);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    background: transparent;
+  }
+
+  .btn-elegant:hover {
+    background-color: var(--color-gold);
+    color: var(--color-offwhite);
+  }
+
+  .btn-moss {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 36px;
+    border: 1px solid var(--color-moss);
+    color: var(--color-offwhite);
+    background-color: var(--color-moss);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  .btn-moss:hover {
+    background-color: var(--color-moss-light);
+    border-color: var(--color-moss-light);
+  }
+
+  /* Card elegant */
+  .card-elegant {
+    background-color: #FDFCF9;
+    border: 1px solid #E8E0D0;
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+  }
+
+  .card-elegant:hover {
+    box-shadow: 0 8px 40px rgba(58, 82, 50, 0.08);
+    transform: translateY(-2px);
+  }
+
+  /* Glassmorphism navbar */
+  .navbar-glass {
+    background: rgba(249, 246, 240, 0.88);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(184, 149, 42, 0.15);
+  }
+
+  /* Photo frame */
+  .photo-frame {
+    position: relative;
+  }
+
+  .photo-frame::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border: 1px solid rgba(184, 149, 42, 0.4);
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .photo-frame::after {
+    content: '';
+    position: absolute;
+    inset: -16px;
+    border: 1px solid rgba(58, 82, 50, 0.15);
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-offwhite);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-moss);
+  border-radius: 3px;
+}
+
+/* Form inputs */
+input, textarea, select {
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus, textarea:focus {
+  border-color: var(--color-moss) !important;
+  box-shadow: 0 0 0 2px rgba(58, 82, 50, 0.1);
+}
