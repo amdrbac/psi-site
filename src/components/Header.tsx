@@ -55,7 +55,7 @@ export default function Header() {
               className="font-sans text-xs tracking-[0.2em] uppercase"
               style={{ color: 'var(--color-gold)', fontWeight: 400 }}
             >
-              Psicanalista
+              Psicóloga
             </span>
           </div>
         </a>

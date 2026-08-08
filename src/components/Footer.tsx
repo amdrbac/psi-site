@@ -69,7 +69,7 @@ export default function Footer() {
                   className="font-sans text-xs tracking-[0.15em] uppercase"
                   style={{ color: 'rgba(196,164,90,0.7)', fontWeight: 400 }}
                 >
-                  Psicanalista
+                  Psicóloga
                 </p>
               </div>
             </div>

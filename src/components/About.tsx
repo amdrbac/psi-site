@@ -22,7 +22,7 @@ export default function About() {
             <div className="photo-frame relative" style={{ maxWidth: '380px', width: '100%' }}>
               <img
                 src="/images/foto.jpg"
-                alt="Victória P. Paes — Psicanalista"
+                alt="Victória P. Paes — Psicóloga"
                 className="w-full object-cover"
                 style={{
                   borderRadius: '2px',
@@ -79,7 +79,7 @@ export default function About() {
                 Victória P. Paes é psicóloga clínica e psicanalista, com uma trajetória marcada pela profundidade do encontro humano. Antes de consolidar sua prática privada, atuou pelo Sistema Único de Saúde — experiência que moldou em sua escuta uma sensibilidade singular: a capacidade de estar presente com qualidade, independentemente do contexto, da história ou da origem de quem a procura.
               </p>
               <p>
-                Pós-graduada em Clínica Psicanalítica e pós-graduanda em Psicanálise e Análise do Contemporâneo, Victória conduz sua clínica a partir de uma escuta rigorosa e acolhedora. Seu trabalho se orienta pela crença de que cada sujeito carrega em si a possibilidade de transformação — e de que a palavra, quando acolhida sem pressa, é capaz de produzir algo inédito.
+                Pós-graduada em Clínica Psicanalítica e pós-graduanda em Psicanálise e Análise do Contemporâneo, Victória conduz sua clínica a partir de uma escuta ética e acolhedora. Seu trabalho se orienta pela crença de que cada sujeito carrega em si a possibilidade de transformação — e de que a palavra, quando acolhida sem pressa, é capaz de produzir algo inédito.
               </p>
               <p>
                 Sua formação contínua não é apenas acadêmica: é o reflexo de um compromisso ético com o ofício psicanalítico, com o rigor teórico e com a dimensão humana que todo processo analítico exige.
