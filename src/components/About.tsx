@@ -21,7 +21,7 @@ export default function About() {
           <div className="flex justify-center lg:justify-end">
             <div className="photo-frame relative" style={{ maxWidth: '380px', width: '100%' }}>
               <img
-                src="/images/Foto.jpeg"
+                src="/images/Footoo.jpeg"
                 alt="Victória P. Paes — Psicóloga"
                 className="w-full object-cover"
                 style={{
