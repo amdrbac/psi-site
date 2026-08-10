@@ -103,7 +103,7 @@ export default function Hero() {
           className="font-sans text-xs tracking-widest uppercase"
           style={{ color: 'var(--color-text-muted)', fontSize: '0.65rem' }}
         >
-          Rolar
+          
         </span>
         <ArrowDown size={14} style={{ color: 'var(--color-gold)' }} />
       </div>
