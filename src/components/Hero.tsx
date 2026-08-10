@@ -97,7 +97,7 @@ export default function Hero() {
         </button>
       </div>
 
-      {/* Scroll indicator */}
+      
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce">
         <span
           className="font-sans text-xs tracking-widest uppercase"
