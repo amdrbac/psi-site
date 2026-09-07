@@ -1,31 +1,112 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ExternalLink } from 'lucide-react';
 
-// =============================================================
-// CITAÇÕES AUTORAIS — Victória P. Paes
-// Substitua os textos abaixo pelas citações reais quando disponíveis.
-// Cada objeto tem: "quote" (texto da citação) e "excerpt" (descrição opcional do post).
-// =============================================================
-const quotes = [
-  {
-    quote: '[Citação autoral 1]',
-    excerpt: 'Em breve',
-    tag: 'Substack',
-  },
-  {
-    quote: '[Citação autoral 2]',
-    excerpt: 'Em breve',
-    tag: 'Substack',
-  },
-  {
-    quote: '[Citação autoral 3]',
-    excerpt: 'Em breve',
-    tag: 'Substack',
-  },
+const SUBSTACK_URL = 'https://psivictoriapaes.substack.com';
+
+// Placeholders exibidos enquanto o feed carrega ou quando não há posts
+// disponíveis (feed vazio/indisponível). Nunca inventamos conteúdo aqui.
+const FALLBACK_QUOTES = [
+  { quote: '[Citação autoral 1]', excerpt: 'Em breve', tag: 'Substack' },
+  { quote: '[Citação autoral 2]', excerpt: 'Em breve', tag: 'Substack' },
+  { quote: '[Citação autoral 3]', excerpt: 'Em breve', tag: 'Substack' },
 ];
 
+interface SubstackPost {
+  title: string;
+  link: string;
+  pubDate: string;
+  excerpt: string;
+}
+
+function formatDate(pubDate: string): string {
+  const date = new Date(pubDate);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+}
+
+// Conteúdo interno do card, compartilhado entre o post real (link clicável)
+// e o placeholder "Em breve" — mantém o visual original (aspas, cores, layout).
+function QuoteCardBody({
+  text,
+  muted,
+  rightLabel,
+}: {
+  text: string;
+  muted: boolean;
+  rightLabel: string;
+}) {
+  return (
+    <>
+      <span
+        className="font-serif absolute top-4 left-8"
+        style={{ fontSize: '5rem', color: 'rgba(196,164,90,0.15)', lineHeight: 1, fontWeight: 300 }}
+      >
+        "
+      </span>
+
+      <div className="relative z-10 flex-1 flex flex-col">
+        <div
+          className="w-6 mb-6"
+          style={{ height: '1px', background: 'rgba(196,164,90,0.5)' }}
+        />
+        <p
+          className="font-serif flex-1 mb-6"
+          style={{
+            color: muted ? 'rgba(244,239,229,0.3)' : 'rgba(244,239,229,0.9)',
+            fontWeight: 300,
+            fontSize: '1.1rem',
+            lineHeight: 1.75,
+            fontStyle: muted ? 'normal' : 'italic',
+          }}
+        >
+          {text}
+        </p>
+
+        <div className="flex items-center justify-between">
+          <span
+            className="font-sans text-xs tracking-widest uppercase"
+            style={{ color: 'rgba(196,164,90,0.6)', fontWeight: 400 }}
+          >
+            Substack
+          </span>
+          <span
+            className="font-serif text-xs italic"
+            style={{ color: 'rgba(244,239,229,0.35)' }}
+          >
+            {rightLabel}
+          </span>
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function Quotes() {
-  const refs = useRef<(HTMLDivElement | null)[]>([]);
+  const refs = useRef<(HTMLElement | null)[]>([]);
+  const [posts, setPosts] = useState<SubstackPost[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch('/api/substack')
+      .then(res => res.json())
+      .then((data: { posts?: SubstackPost[] }) => {
+        if (!cancelled && Array.isArray(data.posts)) {
+          setPosts(data.posts);
+        }
+      })
+      .catch(() => {
+        // Feed indisponível: mantém a lista vazia e cai no fallback "Em breve".
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -34,7 +115,9 @@ export default function Quotes() {
     );
     refs.current.forEach(r => r && observer.observe(r));
     return () => observer.disconnect();
-  }, []);
+  }, [posts]);
+
+  const hasPosts = posts.length > 0;
 
   return (
     <section
@@ -86,65 +169,59 @@ export default function Quotes() {
           </p>
         </div>
 
+        {/* Loading discreto */}
+        {loading && (
+          <p
+            className="font-sans text-xs text-center mb-6"
+            style={{ color: 'rgba(196,164,90,0.5)' }}
+          >
+            Carregando publicações…
+          </p>
+        )}
+
         {/* Quote cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-14">
-          {quotes.map((q, i) => (
-            <div
-              key={i}
-              ref={el => { refs.current[i + 1] = el; }}
-              className="fade-in flex flex-col p-10 relative"
-              style={{
-                background: 'rgba(244,239,229,0.06)',
-                border: '1px solid rgba(196,164,90,0.2)',
-                borderRadius: '2px',
-                transitionDelay: `${i * 0.1}s`,
-                backdropFilter: 'blur(4px)',
-              }}
-            >
-              {/* Large quote mark */}
-              <span
-                className="font-serif absolute top-4 left-8"
-                style={{ fontSize: '5rem', color: 'rgba(196,164,90,0.15)', lineHeight: 1, fontWeight: 300 }}
-              >
-                "
-              </span>
+          {(hasPosts ? posts : FALLBACK_QUOTES).map((item, i) => {
+            const cardStyle = {
+              background: 'rgba(244,239,229,0.06)',
+              border: '1px solid rgba(196,164,90,0.2)',
+              borderRadius: '2px',
+              transitionDelay: `${i * 0.1}s`,
+              backdropFilter: 'blur(4px)',
+            };
 
-              <div className="relative z-10 flex-1 flex flex-col">
-                <div
-                  className="w-6 mb-6"
-                  style={{ height: '1px', background: 'rgba(196,164,90,0.5)' }}
-                />
-                {/* Quote text — replace [Citação autoral N] with real quote */}
-                <p
-                  className="font-serif flex-1 mb-6"
-                  style={{
-                    color: q.quote.startsWith('[') ? 'rgba(244,239,229,0.3)' : 'rgba(244,239,229,0.9)',
-                    fontWeight: 300,
-                    fontSize: '1.1rem',
-                    lineHeight: 1.75,
-                    fontStyle: q.quote.startsWith('[') ? 'normal' : 'italic',
-                  }}
+            if (hasPosts) {
+              const post = item as SubstackPost;
+              return (
+                <a
+                  key={post.link || i}
+                  ref={el => { refs.current[i + 1] = el; }}
+                  href={post.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="fade-in flex flex-col p-10 relative cursor-pointer"
+                  style={cardStyle}
                 >
-                  {q.quote.startsWith('[') ? 'Em breve...' : q.quote}
-                </p>
+                  <QuoteCardBody
+                    text={post.title || post.excerpt || 'Ler no Substack'}
+                    muted={false}
+                    rightLabel={formatDate(post.pubDate) || 'Victória P. Paes'}
+                  />
+                </a>
+              );
+            }
 
-                <div className="flex items-center justify-between">
-                  <span
-                    className="font-sans text-xs tracking-widest uppercase"
-                    style={{ color: 'rgba(196,164,90,0.6)', fontWeight: 400 }}
-                  >
-                    {q.tag}
-                  </span>
-                  <span
-                    className="font-serif text-xs italic"
-                    style={{ color: 'rgba(244,239,229,0.35)' }}
-                  >
-                    Victória P. Paes
-                  </span>
-                </div>
+            return (
+              <div
+                key={i}
+                ref={el => { refs.current[i + 1] = el; }}
+                className="fade-in flex flex-col p-10 relative"
+                style={cardStyle}
+              >
+                <QuoteCardBody text="Em breve..." muted rightLabel="Victória P. Paes" />
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Substack link */}
@@ -153,7 +230,7 @@ export default function Quotes() {
           className="fade-in text-center"
         >
           <a
-            href="https://substack.com/@psivictoriapaes"
+            href={SUBSTACK_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-3 font-sans text-xs tracking-[0.18em] uppercase py-3 px-8 transition-all duration-300"
