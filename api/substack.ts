@@ -22,6 +22,11 @@ const RAW_LIMIT = 10; // tetos defensivos por fonte antes de mesclar/ordenar
 const CACHE_SECONDS = 60 * 10; // 10 min
 const USER_AGENT = 'Mozilla/5.0 (compatible; PsiSiteBot/1.0; +https://psi-site-iota.vercel.app)';
 const NO_BODY_FALLBACK = 'Nova publicação no Substack';
+// Proxy de imagem do próprio Substack: redimensiona/otimiza e, importante,
+// converte formatos que o browser não renderiza (ex.: .heic) para algo
+// exibível (f_auto). Usamos para toda imagem, mesmo já sendo jpeg/png/webp.
+const SUBSTACK_CDN_PREFIX =
+  'https://substackcdn.com/image/fetch/w_800,c_limit,f_auto,q_auto:good,fl_progressive:steep/';
 
 type MinimalRequest = { method?: string };
 type MinimalResponse = {
@@ -35,6 +40,11 @@ interface NormalizedItem {
   link: string;
   pubDate: string;
   type: 'post' | 'note';
+  imageUrl?: string | null;
+}
+
+function toSubstackCdnUrl(originalUrl: string): string {
+  return `${SUBSTACK_CDN_PREFIX}${encodeURIComponent(originalUrl)}`;
 }
 
 function textOf(value: unknown): string {
@@ -71,6 +81,22 @@ function timeOf(pubDate: string): number {
 // ---------------------------------------------------------------------
 // Posts (RSS)
 // ---------------------------------------------------------------------
+
+// O RSS pode trazer a imagem de capa via <enclosure> ou <media:content>
+// (ambos como atributos, sem filho de texto). Se nenhum existir, sem imagem.
+function extractPostImageUrl(record: Record<string, unknown>): string | null {
+  const enclosure = record.enclosure as { '@_url'?: string; '@_type'?: string } | undefined;
+  if (typeof enclosure?.['@_url'] === 'string' && enclosure['@_url']) {
+    return toSubstackCdnUrl(enclosure['@_url']);
+  }
+
+  const media = record['media:content'] as { '@_url'?: string } | undefined;
+  if (typeof media?.['@_url'] === 'string' && media['@_url']) {
+    return toSubstackCdnUrl(media['@_url']);
+  }
+
+  return null;
+}
 
 async function fetchPosts(): Promise<NormalizedItem[]> {
   try {
@@ -110,6 +136,7 @@ async function fetchPosts(): Promise<NormalizedItem[]> {
         link: textOf(record.link),
         pubDate: textOf(record.pubDate),
         type: 'post',
+        imageUrl: extractPostImageUrl(record),
       };
     });
   } catch {
@@ -154,14 +181,28 @@ function extractNoteText(rawBody: unknown): string {
   return '';
 }
 
+interface RawNoteAttachment {
+  type?: string;
+  imageUrl?: string;
+}
+
 interface RawNoteItem {
   context?: { type?: string };
   comment?: {
     body?: unknown;
     date?: unknown;
-    attachments?: unknown[];
+    attachments?: RawNoteAttachment[];
   };
   entity_key?: string;
+}
+
+// Primeiro attachment do tipo imagem, já convertido para a URL do CDN do
+// Substack (necessário inclusive para formatos como .heic, que o browser
+// não renderiza direto).
+function findNoteImageUrl(attachments: RawNoteAttachment[] | undefined): string | null {
+  if (!Array.isArray(attachments)) return null;
+  const image = attachments.find(a => a?.type === 'image' && typeof a.imageUrl === 'string' && a.imageUrl);
+  return image ? toSubstackCdnUrl(image.imageUrl as string) : null;
 }
 
 function normalizeNote(raw: RawNoteItem): NormalizedItem | null {
@@ -169,13 +210,21 @@ function normalizeNote(raw: RawNoteItem): NormalizedItem | null {
   if (!entityKey) return null;
 
   const text = stripHtml(extractNoteText(raw.comment?.body));
-  const hasAttachment = Array.isArray(raw.comment?.attachments) && raw.comment.attachments.length > 0;
-
-  if (!text && !hasAttachment) return null;
-
-  const title = text ? truncate(text, 80) : NO_BODY_FALLBACK;
-  const excerpt = text ? truncate(text, 160) : NO_BODY_FALLBACK;
+  const imageUrl = findNoteImageUrl(raw.comment?.attachments);
   const pubDate = typeof raw.comment?.date === 'string' ? raw.comment.date : '';
+
+  // Com texto: usa o texto (com ou sem imagem). Sem texto + com imagem: a
+  // imagem já carrega o card, não precisa de frase. Sem texto e sem
+  // imagem: aí sim o fallback.
+  let title = '';
+  let excerpt = '';
+  if (text) {
+    title = truncate(text, 80);
+    excerpt = truncate(text, 160);
+  } else if (!imageUrl) {
+    title = NO_BODY_FALLBACK;
+    excerpt = NO_BODY_FALLBACK;
+  }
 
   return {
     title,
@@ -183,6 +232,7 @@ function normalizeNote(raw: RawNoteItem): NormalizedItem | null {
     link: `https://substack.com/@${PUBLICATION_HANDLE}/note/${entityKey}`,
     pubDate,
     type: 'note',
+    imageUrl,
   };
 }
 
