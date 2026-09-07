@@ -16,6 +16,7 @@ interface SubstackPost {
   link: string;
   pubDate: string;
   excerpt: string;
+  type?: 'post' | 'note';
 }
 
 function formatDate(pubDate: string): string {
@@ -203,7 +204,7 @@ export default function Quotes() {
                   style={cardStyle}
                 >
                   <QuoteCardBody
-                    text={post.title || post.excerpt || 'Ler no Substack'}
+                    text={post.excerpt || post.title || 'Ler no Substack'}
                     muted={false}
                     rightLabel={formatDate(post.pubDate) || 'Victória P. Paes'}
                   />
