@@ -1,10 +1,20 @@
 import { useEffect, useRef } from 'react';
 
+function isInteractive(target: EventTarget | null): boolean {
+  return target instanceof Element && target.closest('a, button, [role="button"]') !== null;
+}
+
 export default function Cursor() {
   const dotRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
+  const coarse = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
 
   useEffect(() => {
+    // Em telas touch não há cursor de mouse — não ativa nada, não marca o html.
+    if (coarse) return;
+
+    document.documentElement.classList.add('has-custom-cursor');
+
     const dot = dotRef.current;
     const ring = ringRef.current;
     if (!dot || !ring) return;
@@ -28,47 +38,46 @@ export default function Cursor() {
       raf = requestAnimationFrame(animate);
     };
 
-    const onEnterLink = () => {
-      dot.style.transform = 'translate(-50%, -50%) scale(2)';
-      ring.style.width = '48px';
-      ring.style.height = '48px';
-      ring.style.opacity = '0.5';
+    // Delegação no document: cobre links/botões adicionados depois do mount
+    // (ex.: cards do Substack carregados via fetch), sem precisar re-consultar
+    // o DOM a cada mudança.
+    const onOver = (e: MouseEvent) => {
+      if (isInteractive(e.target)) {
+        dot.style.transform = 'translate(-50%, -50%) scale(2)';
+        ring.style.width = '48px';
+        ring.style.height = '48px';
+        ring.style.opacity = '0.5';
+      }
     };
-    const onLeaveLink = () => {
-      dot.style.transform = 'translate(-50%, -50%) scale(1)';
-      ring.style.width = '30px';
-      ring.style.height = '30px';
-      ring.style.opacity = '1';
+    const onOut = (e: MouseEvent) => {
+      if (isInteractive(e.target) && !isInteractive(e.relatedTarget)) {
+        dot.style.transform = 'translate(-50%, -50%) scale(1)';
+        ring.style.width = '30px';
+        ring.style.height = '30px';
+        ring.style.opacity = '1';
+      }
     };
 
     window.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseover', onOver);
+    document.addEventListener('mouseout', onOut);
     raf = requestAnimationFrame(animate);
-
-    const links = document.querySelectorAll('a, button, [role="button"]');
-    links.forEach(l => {
-      l.addEventListener('mouseenter', onEnterLink);
-      l.addEventListener('mouseleave', onLeaveLink);
-    });
 
     return () => {
       window.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseover', onOver);
+      document.removeEventListener('mouseout', onOut);
       cancelAnimationFrame(raf);
-      links.forEach(l => {
-        l.removeEventListener('mouseenter', onEnterLink);
-        l.removeEventListener('mouseleave', onLeaveLink);
-      });
+      document.documentElement.classList.remove('has-custom-cursor');
     };
-  }, []);
+  }, [coarse]);
 
-  // Hide on touch devices
-  if (typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches) {
-    return null;
-  }
+  if (coarse) return null;
 
   return (
     <>
-      <div ref={dotRef} className="cursor-dot" />
-      <div ref={ringRef} className="cursor-ring" />
+      <div ref={dotRef} className="cursor-dot" aria-hidden="true" />
+      <div ref={ringRef} className="cursor-ring" aria-hidden="true" />
     </>
   );
 }

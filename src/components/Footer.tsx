@@ -45,7 +45,7 @@ const socials = [
   },
   {
     label: 'Substack',
-    href: 'https://substack.com/@psivictoriapaes',
+    href: 'https://psivictoriapaes.substack.com',
     icon: <SubstackIcon size={18} />,
   },
 ];

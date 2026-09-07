@@ -69,6 +69,7 @@ function QuoteCardBody({
               src={imageUrl}
               alt={imageAlt || 'Publicação de Victória P. Paes no Substack'}
               loading="lazy"
+              referrerPolicy="no-referrer"
               className="w-full h-full"
               style={{ objectFit: 'cover', display: 'block' }}
             />
@@ -153,6 +154,13 @@ export default function Quotes() {
   }, [posts]);
 
   const hasPosts = posts.length > 0;
+  const itemCount = hasPosts ? posts.length : FALLBACK_QUOTES.length;
+  const gridClass =
+    itemCount === 1
+      ? 'grid grid-cols-1 gap-6 mb-14 max-w-md mx-auto'
+      : itemCount === 2
+      ? 'grid grid-cols-1 md:grid-cols-2 gap-6 mb-14'
+      : 'grid grid-cols-1 md:grid-cols-3 gap-6 mb-14';
 
   return (
     <section
@@ -215,7 +223,7 @@ export default function Quotes() {
         )}
 
         {/* Quote cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-14">
+        <div className={gridClass}>
           {(hasPosts ? posts : FALLBACK_QUOTES).map((item, i) => {
             const cardStyle = {
               background: 'rgba(244,239,229,0.06)',
@@ -234,7 +242,7 @@ export default function Quotes() {
                   href={post.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="fade-in flex flex-col p-10 relative cursor-pointer"
+                  className="fade-in flex flex-col p-6 sm:p-10 relative cursor-pointer"
                   style={cardStyle}
                 >
                   <QuoteCardBody
@@ -252,7 +260,7 @@ export default function Quotes() {
               <div
                 key={i}
                 ref={el => { refs.current[i + 1] = el; }}
-                className="fade-in flex flex-col p-10 relative"
+                className="fade-in flex flex-col p-6 sm:p-10 relative"
                 style={cardStyle}
               >
                 <QuoteCardBody text="Em breve..." muted rightLabel="Victória P. Paes" />

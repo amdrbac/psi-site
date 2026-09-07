@@ -23,6 +23,9 @@ export default function About() {
               <img
                 src="/images/Footoo.jpeg"
                 alt="Victória P. Paes — Psicóloga"
+                width={600}
+                height={800}
+                loading="eager"
                 className="w-full object-cover"
                 style={{
                   borderRadius: '2px',
