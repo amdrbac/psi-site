@@ -13,7 +13,7 @@ export default function App() {
     <>
       <Cursor />
       <Header />
-      <main>
+      <main id="main-content">
         <Hero />
         <About />
         <Psychoanalysis />

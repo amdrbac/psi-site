@@ -23,45 +23,20 @@
     font-family: 'Montserrat', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    cursor: none;
-  }
-
-  * {
-    cursor: none;
   }
 
   ::selection {
     background-color: #3A5232;
     color: #F9F6F0;
   }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 2px;
+  }
 }
 
 @layer components {
-  /* Custom cursor */
-  .cursor-dot {
-    width: 8px;
-    height: 8px;
-    background-color: var(--color-moss);
-    border-radius: 50%;
-    position: fixed;
-    pointer-events: none;
-    z-index: 9999;
-    transform: translate(-50%, -50%);
-    transition: transform 0.1s ease;
-  }
-
-  .cursor-ring {
-    width: 30px;
-    height: 30px;
-    border: 1px solid var(--color-gold);
-    border-radius: 50%;
-    position: fixed;
-    pointer-events: none;
-    z-index: 9998;
-    transform: translate(-50%, -50%);
-    transition: transform 0.15s ease, width 0.2s ease, height 0.2s ease, opacity 0.2s ease;
-  }
-
   /* Gold divider */
   .gold-divider {
     width: 60px;
@@ -75,16 +50,27 @@
     background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
   }
 
-  /* Fade-in animation */
+  /* Fade-in animation. A .fade-in section normally becomes .visible via
+     IntersectionObserver in JS; fadeInFallback is a safety net so content
+     still appears if that JS never runs (disabled/blocked/errored). */
   .fade-in {
     opacity: 0;
     transform: translateY(24px);
     transition: opacity 0.7s ease, transform 0.7s ease;
+    animation: fadeInFallback 0.6s ease 2s forwards;
   }
 
   .fade-in.visible {
     opacity: 1;
     transform: translateY(0);
+    animation: none;
+  }
+
+  @keyframes fadeInFallback {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   /* Section title */
@@ -184,6 +170,34 @@
   }
 }
 
+/* Custom cursor — só em telas com mouse (pointer: fine) e quando o
+   componente Cursor confirma isso marcando html.has-custom-cursor. */
+@media (pointer: fine) {
+  html.has-custom-cursor .cursor-dot {
+    width: 8px;
+    height: 8px;
+    background-color: var(--color-moss);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s ease;
+  }
+
+  html.has-custom-cursor .cursor-ring {
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--color-gold);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: transform 0.15s ease, width 0.2s ease, height 0.2s ease, opacity 0.2s ease;
+  }
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -200,11 +214,32 @@
 
 /* Form inputs */
 input, textarea, select {
-  outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input, textarea {
+  /* 16px evita o zoom automático do Safari/iOS ao focar o campo */
+  font-size: 16px;
 }
 
 input:focus, textarea:focus {
   border-color: var(--color-moss) !important;
   box-shadow: 0 0 0 2px rgba(58, 82, 50, 0.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .fade-in {
+    opacity: 1;
+    transform: none;
+    transition: none;
+    animation: none;
+  }
+
+  .animate-bounce {
+    animation: none;
+  }
 }

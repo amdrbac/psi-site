@@ -20,6 +20,23 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [menuOpen]);
+
   const handleNavClick = (href: string) => {
     setMenuOpen(false);
     const el = document.querySelector(href);
@@ -37,16 +54,16 @@ export default function Header() {
         <a
           href="#inicio"
           onClick={e => { e.preventDefault(); handleNavClick('#inicio'); }}
-          className="flex items-center gap-4 group"
+          className="flex items-center gap-4 group min-w-0"
         >
           <img
             src="/images/logo.png"
             alt="Victória P. Paes — Logo"
-            className="h-12 w-auto object-contain"
+            className="h-10 sm:h-12 w-auto object-contain flex-shrink-0"
           />
-          <div className="flex flex-col">
+          <div className="flex flex-col min-w-0">
             <span
-              className="font-serif text-2xl leading-tight tracking-wide"
+              className="font-serif text-lg sm:text-2xl leading-tight tracking-wide truncate"
               style={{ color: 'var(--color-moss)', fontWeight: 500 }}
             >
               Victória P. Paes
@@ -77,10 +94,12 @@ export default function Header() {
 
         {/* Mobile hamburger */}
         <button
-          className="md:hidden p-2 transition-colors"
+          className="md:hidden flex items-center justify-center min-w-[44px] min-h-[44px] transition-colors"
           style={{ color: 'var(--color-moss)' }}
           onClick={() => setMenuOpen(v => !v)}
-          aria-label="Menu"
+          aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
+          aria-expanded={menuOpen}
+          aria-controls="mobile-menu"
         >
           {menuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
@@ -88,6 +107,7 @@ export default function Header() {
 
       {/* Mobile menu */}
       <div
+        id="mobile-menu"
         className={`md:hidden overflow-hidden transition-all duration-400 ${
           menuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
         }`}
@@ -99,7 +119,7 @@ export default function Header() {
               key={link.href}
               href={link.href}
               onClick={e => { e.preventDefault(); handleNavClick(link.href); }}
-              className="font-sans text-sm tracking-[0.12em] uppercase py-1"
+              className="font-sans text-sm tracking-[0.12em] uppercase py-3"
               style={{ color: 'var(--color-moss)', fontWeight: 500 }}
             >
               {link.label}

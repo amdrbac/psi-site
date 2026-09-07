@@ -14,8 +14,9 @@
 // "Em breve".
 import { XMLParser } from 'fast-xml-parser';
 
-const FEED_URL = 'https://psivictoriapaes.substack.com/feed';
-const NOTES_URL = 'https://psivictoriapaes.substack.com/api/v1/notes';
+const PUBLICATION_URL = 'https://psivictoriapaes.substack.com';
+const FEED_URL = `${PUBLICATION_URL}/feed`;
+const NOTES_URL = `${PUBLICATION_URL}/api/v1/notes`;
 const PUBLICATION_HANDLE = 'psivictoriapaes';
 const MAX_ITEMS = 3;
 const RAW_LIMIT = 10; // tetos defensivos por fonte antes de mesclar/ordenar
@@ -43,7 +44,36 @@ interface NormalizedItem {
   imageUrl?: string | null;
 }
 
-function toSubstackCdnUrl(originalUrl: string): string {
+// Hosts confiáveis para URLs que chegam de fora (RSS/Notes) antes de irem
+// para o HTML — evita que um feed comprometido injete um href/imagem para
+// fora do Substack.
+const ALLOWED_LINK_HOSTS = (host: string): boolean =>
+  host === 'substack.com' || host.endsWith('.substack.com');
+
+const ALLOWED_IMAGE_HOSTS = (host: string): boolean =>
+  host === 'substackcdn.com' ||
+  host === 'substack-post-media.s3.amazonaws.com' ||
+  host === 'substack.com' ||
+  host.endsWith('.substack.com');
+
+function isAllowedUrl(urlString: string, hostAllowed: (host: string) => boolean): boolean {
+  try {
+    const url = new URL(urlString);
+    return url.protocol === 'https:' && hostAllowed(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+function sanitizeLink(urlString: string): string {
+  return isAllowedUrl(urlString, ALLOWED_LINK_HOSTS) ? urlString : PUBLICATION_URL;
+}
+
+// Só gera a URL do proxy de imagem do Substack se a imagem original vier de
+// um host permitido; caso contrário, sem imagem (null) em vez de repassar
+// uma URL arbitrária para o CDN.
+function toSubstackCdnUrl(originalUrl: string): string | null {
+  if (!isAllowedUrl(originalUrl, ALLOWED_IMAGE_HOSTS)) return null;
   return `${SUBSTACK_CDN_PREFIX}${encodeURIComponent(originalUrl)}`;
 }
 
@@ -133,7 +163,7 @@ async function fetchPosts(): Promise<NormalizedItem[]> {
       return {
         title,
         excerpt: truncate(excerptSource, 160),
-        link: textOf(record.link),
+        link: sanitizeLink(textOf(record.link)),
         pubDate: textOf(record.pubDate),
         type: 'post',
         imageUrl: extractPostImageUrl(record),
@@ -229,7 +259,7 @@ function normalizeNote(raw: RawNoteItem): NormalizedItem | null {
   return {
     title,
     excerpt,
-    link: `https://substack.com/@${PUBLICATION_HANDLE}/note/${entityKey}`,
+    link: sanitizeLink(`https://substack.com/@${PUBLICATION_HANDLE}/note/${entityKey}`),
     pubDate,
     type: 'note',
     imageUrl,
@@ -267,7 +297,14 @@ async function fetchNotes(): Promise<NormalizedItem[]> {
 // Handler
 // ---------------------------------------------------------------------
 
-export default async function handler(_req: MinimalRequest, res: MinimalResponse) {
+export default async function handler(req: MinimalRequest, res: MinimalResponse) {
+  const method = (req.method ?? 'GET').toUpperCase();
+  if (method !== 'GET' && method !== 'HEAD') {
+    res.setHeader('Allow', 'GET, HEAD');
+    res.status(405).json({ posts: [] });
+    return;
+  }
+
   try {
     const [notes, posts] = await Promise.all([fetchNotes(), fetchPosts()]);
 
@@ -279,13 +316,11 @@ export default async function handler(_req: MinimalRequest, res: MinimalResponse
       `public, s-maxage=${CACHE_SECONDS}, stale-while-revalidate=${CACHE_SECONDS * 3}`
     );
     res.status(200).json({ posts: result });
-  } catch (error) {
+  } catch {
     // Falha inesperada: não inventamos conteúdo, devolvemos lista vazia
-    // com cache curto para tentar de novo em breve.
+    // com cache curto para tentar de novo em breve. Sem campo de erro no
+    // corpo — detalhes internos não vão para a resposta pública.
     res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120');
-    res.status(200).json({
-      posts: [],
-      error: error instanceof Error ? error.message : 'Erro desconhecido ao buscar o Substack',
-    });
+    res.status(200).json({ posts: [] });
   }
 }

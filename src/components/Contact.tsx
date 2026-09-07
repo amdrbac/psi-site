@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, FormEvent } from 'react';
 import { ChevronRight, ChevronLeft, CheckCircle, Send } from 'lucide-react';
 
 interface FormData {
@@ -18,6 +18,23 @@ function buildWhatsAppURL(data: FormData): string {
 
 💬 ${data.message}`;
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
+}
+
+function digitsOnly(value: string): string {
+  return value.replace(/\D/g, '');
+}
+
+// Abre o WhatsApp em nova aba. Se o navegador bloquear o popup, navega a
+// própria aba para o link (o botão "clique aqui" na tela de confirmação
+// cobre o caso de nem isso funcionar).
+function openWhatsApp(url: string) {
+  const popup = window.open('about:blank', '_blank');
+  if (popup) {
+    popup.opener = null;
+    popup.location.href = url;
+    return;
+  }
+  window.location.href = url;
 }
 
 const inputClass = `w-full bg-white border font-sans text-sm py-3 px-4 rounded-none transition-all duration-200`;
@@ -46,7 +63,9 @@ export default function Contact() {
   const validateStep1 = () => {
     const e: Partial<FormData> = {};
     if (!form.name.trim()) e.name = 'Por favor, informe seu nome.';
+    const phoneDigits = digitsOnly(form.phone);
     if (!form.phone.trim()) e.phone = 'Por favor, informe seu WhatsApp.';
+    else if (phoneDigits.length < 10 || phoneDigits.length > 13) e.phone = 'Informe um WhatsApp válido, com DDD.';
     if (!form.city.trim()) e.city = 'Por favor, informe sua cidade.';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -59,11 +78,16 @@ export default function Contact() {
     return Object.keys(e).length === 0;
   };
 
-  const handleNext = () => {
-    if (step === 1 && validateStep1()) setStep(2);
-    if (step === 2 && validateStep2()) {
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (step === 1) {
+      if (validateStep1()) setStep(2);
+      return;
+    }
+    if (step === 2) {
+      if (!validateStep2()) return;
       setStep(3);
-      window.open(buildWhatsAppURL(form), '_blank', 'noopener,noreferrer');
+      openWhatsApp(buildWhatsAppURL(form));
     }
   };
 
@@ -114,6 +138,18 @@ export default function Contact() {
               }}
             >
               Preencha o formulário abaixo e Victória entrará em contato para agendar sua sessão inicial.
+            </p>
+            <p
+              className="font-sans mx-auto mt-4"
+              style={{
+                color: 'var(--color-text-muted)',
+                fontWeight: 300,
+                fontSize: '0.78rem',
+                lineHeight: 1.7,
+                maxWidth: '440px',
+              }}
+            >
+              Os dados preenchidos vão direto para o WhatsApp da profissional e não são armazenados neste site.
             </p>
           </div>
 
@@ -166,8 +202,9 @@ export default function Contact() {
             </div>
 
             {/* Form card */}
-            <div
-              className="p-10"
+            <form
+              onSubmit={handleSubmit}
+              className="p-6 sm:p-10"
               style={{
                 background: '#FDFCF9',
                 border: '1px solid rgba(58,82,50,0.12)',
@@ -186,16 +223,20 @@ export default function Contact() {
 
                   <div>
                     <label
+                      htmlFor="contact-name"
                       className="font-sans text-xs tracking-widest uppercase block mb-2"
                       style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}
                     >
                       Nome completo *
                     </label>
                     <input
+                      id="contact-name"
                       type="text"
                       value={form.name}
                       onChange={e => handleChange('name', e.target.value)}
                       placeholder="Seu nome completo"
+                      autoComplete="name"
+                      maxLength={80}
                       className={inputClass}
                       style={inputStyle}
                     />
@@ -206,16 +247,20 @@ export default function Contact() {
 
                   <div>
                     <label
+                      htmlFor="contact-phone"
                       className="font-sans text-xs tracking-widest uppercase block mb-2"
                       style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}
                     >
                       WhatsApp *
                     </label>
                     <input
+                      id="contact-phone"
                       type="tel"
                       value={form.phone}
                       onChange={e => handleChange('phone', e.target.value)}
                       placeholder="(DD) 9 0000-0000"
+                      autoComplete="tel"
+                      maxLength={20}
                       className={inputClass}
                       style={inputStyle}
                     />
@@ -226,16 +271,20 @@ export default function Contact() {
 
                   <div>
                     <label
+                      htmlFor="contact-city"
                       className="font-sans text-xs tracking-widest uppercase block mb-2"
                       style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}
                     >
                       Cidade / Estado *
                     </label>
                     <input
+                      id="contact-city"
                       type="text"
                       value={form.city}
                       onChange={e => handleChange('city', e.target.value)}
                       placeholder="Ex: Rio de Janeiro / RJ"
+                      autoComplete="address-level2"
+                      maxLength={80}
                       className={inputClass}
                       style={inputStyle}
                     />
@@ -261,11 +310,17 @@ export default function Contact() {
                   >
                     Compartilhe brevemente o que te motivou a buscar atendimento. Não precisa ser longo.
                   </p>
+                  <label htmlFor="contact-message" className="sr-only">
+                    Sua mensagem
+                  </label>
                   <textarea
+                    id="contact-message"
                     value={form.message}
                     onChange={e => handleChange('message', e.target.value)}
                     placeholder="Escreva livremente..."
                     rows={6}
+                    autoComplete="off"
+                    maxLength={1000}
                     className={inputClass}
                     style={{ ...inputStyle, resize: 'none' }}
                   />
@@ -288,7 +343,7 @@ export default function Contact() {
                     className="font-serif text-2xl mb-4"
                     style={{ color: 'var(--color-moss)', fontWeight: 400 }}
                   >
-                    Mensagem enviada!
+                    Pronto para enviar
                   </h3>
                   <div className="gold-divider mx-auto mb-6" />
                   <p
@@ -318,8 +373,9 @@ export default function Contact() {
                     </a>.
                   </p>
                   <button
+                    type="button"
                     onClick={() => { setStep(1); setForm({ name: '', phone: '', city: '', message: '' }); }}
-                    className="font-sans text-xs tracking-widest uppercase"
+                    className="font-sans text-xs tracking-widest uppercase min-h-[44px]"
                     style={{ color: 'var(--color-text-muted)', fontWeight: 500, textDecoration: 'underline' }}
                   >
                     Enviar outro contato
@@ -332,15 +388,16 @@ export default function Contact() {
                 <div className={`flex mt-8 ${step === 1 ? 'justify-end' : 'justify-between'}`}>
                   {step > 1 && (
                     <button
+                      type="button"
                       onClick={handleBack}
-                      className="flex items-center gap-2 font-sans text-xs tracking-widest uppercase"
+                      className="flex items-center gap-2 font-sans text-xs tracking-widest uppercase min-h-[44px]"
                       style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}
                     >
                       <ChevronLeft size={14} />
                       Voltar
                     </button>
                   )}
-                  <button onClick={handleNext} className="btn-moss flex items-center gap-2">
+                  <button type="submit" className="btn-moss flex items-center gap-2 min-h-[44px]">
                     {step === 2 ? (
                       <>
                         <Send size={13} />
@@ -355,7 +412,7 @@ export default function Contact() {
                   </button>
                 </div>
               )}
-            </div>
+            </form>
           </div>
         </div>
       </div>
