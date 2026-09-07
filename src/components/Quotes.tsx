@@ -17,6 +17,7 @@ interface SubstackPost {
   pubDate: string;
   excerpt: string;
   type?: 'post' | 'note';
+  imageUrl?: string | null;
 }
 
 function formatDate(pubDate: string): string {
@@ -25,43 +26,76 @@ function formatDate(pubDate: string): string {
   return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
 }
 
-// Conteúdo interno do card, compartilhado entre o post real (link clicável)
-// e o placeholder "Em breve" — mantém o visual original (aspas, cores, layout).
+// Conteúdo interno do card, compartilhado entre o post/note real (link
+// clicável) e o placeholder "Em breve" — mantém o visual original (aspas,
+// cores, layout). Quando há imagem (note só-imagem ou capa de post), a
+// aspa decorativa some e a foto ocupa o topo do card no lugar dela.
 function QuoteCardBody({
   text,
   muted,
   rightLabel,
+  imageUrl,
+  imageAlt,
 }: {
   text: string;
   muted: boolean;
   rightLabel: string;
+  imageUrl?: string | null;
+  imageAlt?: string;
 }) {
   return (
     <>
-      <span
-        className="font-serif absolute top-4 left-8"
-        style={{ fontSize: '5rem', color: 'rgba(196,164,90,0.15)', lineHeight: 1, fontWeight: 300 }}
-      >
-        "
-      </span>
+      {!imageUrl && (
+        <span
+          className="font-serif absolute top-4 left-8"
+          style={{ fontSize: '5rem', color: 'rgba(196,164,90,0.15)', lineHeight: 1, fontWeight: 300 }}
+        >
+          "
+        </span>
+      )}
 
       <div className="relative z-10 flex-1 flex flex-col">
-        <div
-          className="w-6 mb-6"
-          style={{ height: '1px', background: 'rgba(196,164,90,0.5)' }}
-        />
-        <p
-          className="font-serif flex-1 mb-6"
-          style={{
-            color: muted ? 'rgba(244,239,229,0.3)' : 'rgba(244,239,229,0.9)',
-            fontWeight: 300,
-            fontSize: '1.1rem',
-            lineHeight: 1.75,
-            fontStyle: muted ? 'normal' : 'italic',
-          }}
-        >
-          {text}
-        </p>
+        {imageUrl ? (
+          <div
+            className="w-full mb-6"
+            style={{
+              height: '220px',
+              overflow: 'hidden',
+              borderRadius: '2px',
+              border: '1px solid rgba(196,164,90,0.2)',
+            }}
+          >
+            <img
+              src={imageUrl}
+              alt={imageAlt || 'Publicação de Victória P. Paes no Substack'}
+              loading="lazy"
+              className="w-full h-full"
+              style={{ objectFit: 'cover', display: 'block' }}
+            />
+          </div>
+        ) : (
+          <div
+            className="w-6 mb-6"
+            style={{ height: '1px', background: 'rgba(196,164,90,0.5)' }}
+          />
+        )}
+
+        {text ? (
+          <p
+            className="font-serif flex-1 mb-6"
+            style={{
+              color: muted ? 'rgba(244,239,229,0.3)' : 'rgba(244,239,229,0.9)',
+              fontWeight: 300,
+              fontSize: '1.1rem',
+              lineHeight: 1.75,
+              fontStyle: muted ? 'normal' : 'italic',
+            }}
+          >
+            {text}
+          </p>
+        ) : (
+          <div className="flex-1 mb-6" />
+        )}
 
         <div className="flex items-center justify-between">
           <span
@@ -204,9 +238,11 @@ export default function Quotes() {
                   style={cardStyle}
                 >
                   <QuoteCardBody
-                    text={post.excerpt || post.title || 'Ler no Substack'}
+                    text={post.excerpt || post.title || (post.imageUrl ? '' : 'Ler no Substack')}
                     muted={false}
                     rightLabel={formatDate(post.pubDate) || 'Victória P. Paes'}
+                    imageUrl={post.imageUrl}
+                    imageAlt={post.excerpt || post.title || 'Foto publicada por Victória P. Paes no Substack'}
                   />
                 </a>
               );
