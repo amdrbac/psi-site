@@ -3,9 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Victória P. Paes — Psicóloga</title>
-    <meta name="description" content="Victória P. Paes, Psicóloga e Psicanalista. Um espaço seguro para se encontrar. Atendimento online." />
+    <title>Victória P. Paes | Psicóloga e Psicanalista — Atendimento Online</title>
+    <meta name="description" content="Victória P. Paes, psicóloga clínica e psicanalista. Atendimento online. CRP 05/68654. Um espaço seguro para se encontrar." />
     <meta name="keywords" content="psicanálise, psicóloga, psicanalista, terapia online, Victória Paes" />
+    <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://www.psivictoriapaes.com.br/" />
     <meta property="og:title" content="Victória P. Paes — Psicóloga" />
     <meta property="og:description" content="Um espaço seguro para se encontrar. Psicóloga e Psicanalista." />
@@ -19,6 +20,57 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <!--
+      Atenção: o CSP em vercel.json permite este bloco via hash SHA-256
+      exato do conteúdo (script-src 'sha256-...'). Se este JSON-LD mudar,
+      recalcule o hash (base64 de sha256 do texto entre as tags <script>)
+      e atualize vercel.json, senão o navegador vai bloquear o bloco.
+    -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://www.psivictoriapaes.com.br/#website",
+            "url": "https://www.psivictoriapaes.com.br/",
+            "name": "Victória P. Paes | Psicóloga e Psicanalista",
+            "inLanguage": "pt-BR"
+          },
+          {
+            "@type": "Person",
+            "@id": "https://www.psivictoriapaes.com.br/#person",
+            "name": "Victória P. Paes",
+            "jobTitle": "Psicóloga e Psicanalista",
+            "image": "https://www.psivictoriapaes.com.br/images/Footoo.jpeg",
+            "url": "https://www.psivictoriapaes.com.br/",
+            "hasCredential": {
+              "@type": "EducationalOccupationalCredential",
+              "credentialCategory": "license",
+              "name": "CRP 05/68654"
+            },
+            "sameAs": [
+              "https://www.instagram.com/psi.victoriapaes",
+              "https://www.tiktok.com/@psivictoriapaes",
+              "https://psivictoriapaes.substack.com"
+            ]
+          },
+          {
+            "@type": "ProfessionalService",
+            "@id": "https://www.psivictoriapaes.com.br/#service",
+            "name": "Victória P. Paes — Psicóloga e Psicanalista",
+            "url": "https://www.psivictoriapaes.com.br/",
+            "image": "https://www.psivictoriapaes.com.br/images/Footoo.jpeg",
+            "provider": { "@id": "https://www.psivictoriapaes.com.br/#person" },
+            "areaServed": {
+              "@type": "Country",
+              "name": "Brasil"
+            },
+            "serviceType": "Atendimento psicológico online"
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <a
@@ -27,6 +79,9 @@
     >
       Pular para o conteúdo
     </a>
+    <noscript>
+      <p>Victória P. Paes — Psicóloga e Psicanalista, CRP 05/68654. Atendimento online.</p>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
